@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Time</title>
+
+    <script type="text/javascript" src="/apps/2.0rc2/sdk.js"></script>
+
+    <script type="text/javascript">
+        Rally.onReady(function () {
+                Ext.define("CustomApp",{extend:"Rally.app.App",componentCls:"app",launch:function(){var userFilter=Ext.create("Rally.data.QueryFilter",{property:"User",operator:"=",value:"/user/12361716944"});userFilter=userFilter.or({property:"User",operator:"=",value:"/user/16630640459"});var projectFilter=Ext.create("Rally.data.QueryFilter",{property:"Project",operator:"=",value:"/project/12352608219"});projectFilter=projectFilter.or({property:"Project",operator:"=",value:"/project/12352814790"});var millisecondsInDay=864e5,currentDate=new Date,startDate=new Date(currentDate-90*millisecondsInDay),startDateUTC=startDate.toISOString(),dateFilter=Ext.create("Rally.data.QueryFilter",{property:"Values.DateVal",operator:">=",value:startDateUTC});Ext.create("Rally.data.WsapiDataStore",{model:"TimeEntryItem",fetch:["User","Project","Task","Values","UserName","Name"],pageSize:100,autoLoad:!0,filters:[userFilter,projectFilter,dateFilter],listeners:{load:this._onTimeEntryItemLoaded,scope:this}})},_onTimeEntryItemLoaded:function(store,data){console.log(data);var timeEntryItems=[],pendingValues=data.length;Ext.Array.each(data,function(timeEntryItem){var t={User:timeEntryItem.get("User")._refObjectName,Project:timeEntryItem.get("Project")._refObjectName,Task:timeEntryItem.get("Task")&&timeEntryItem.get("Task")._refObjectName||"None",Values:[]},values=timeEntryItem.getCollection("Values");values.load({fetch:["Hours","DateVal"],callback:function(records,operation,success){Ext.Array.each(records,function(value){t.Values.push({Hours:value.get("Hours"),DateVal:value.get("DateVal")})},this),--pendingValues,0===pendingValues&&this._createGrid(timeEntryItems)},scope:this}),timeEntryItems.push(t)},this)},_createGrid:function(timeEntryItems){var myStore=Ext.create("Rally.data.custom.Store",{data:timeEntryItems,groupField:"User",pageSize:100});this.grid?this.grid.reconfigure(myStore):this.grid=this.add({xtype:"rallygrid",itemId:"mygrid",store:myStore,features:[{ftype:"grouping"}],columnCfgs:[{text:"User",dataIndex:"User"},{text:"Project",dataIndex:"Project"},{text:"Task",dataIndex:"Task"},{text:"Values",dataIndex:"Values",flex:1,renderer:function(value){var html=[];return Ext.Array.each(value,function(v){html.push("<b>Hours: </b>"+v.Hours+"<br /> "+"<b>Date: </b>"+v.DateVal)}),html.join(", ")}}]})}});
+
+            Rally.launchApp('CustomApp', {
+                name:"Time",
+	            parentRepos:""
+            });
+
+        });
+    </script>
+
+
+    <style type="text/css">
+        .app {
+     /* Add app styles here */
+}
+
+    </style>
+</head>
+<body></body>
+</html>
